@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette de Tirage au Sort</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #333;
+            padding: 15px;
+            margin: 0;
+        }
+        .participants-bar {
+            margin-bottom: 35px;
+            max-width: 1700px;
+            width: 100%;
+        }
+        
+        .participants-bar h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.2rem;
+            text-align: center;
+            display: none;
+        }
+        
+        .participant-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+        }
+        
+        .participant-input-horizontal {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .participant-input-horizontal input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            width: 180px;
+        }
+        
+        .participant-input-horizontal input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .participants-horizontal {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 40px;
+            flex: 1;
+            max-width: 600px;
+        }
+        
+        .participant-chip {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .participant-chip button {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .participant-chip button:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .action-buttons-horizontal {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+        }
+        
+        .roulettes-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 1900px;
+            width: 100%;
+            margin: 0 auto 20px auto;
+            padding: 0 10px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        
+        .roulette-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 35px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            flex: 0 0 auto;
+            min-width: 320px;
+            max-width: 340px;
+            min-height: 480px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .roulette-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+        
+        .roulette-item h3 {
+            margin: 0 0 18px 0;
+            color: #333;
+            font-size: 1.1rem;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        
+        .roulette-mini-container {
+            position: relative;
+            margin: 8px 0;
+        }
+        
+        .roulette-wheel-mini {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.25);
+            position: relative;
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            overflow: hidden;
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .roulette-wheel-mini:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 18px rgba(0,0,0,0.35);
+        }
+        
+        .roulette-pointer-mini {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 24px solid transparent;
+            border-right: 24px solid transparent;
+            border-top: 30px solid #ff6b6b;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .roulette-section-mini {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: right bottom;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 17px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        
+        .result-mini {
+            margin-top: 25px;
+            padding: 20px 25px;
+            background: linear-gradient(45deg, #ffeaa7, #fab1a0);
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3436;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 160px;
+            text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+        }
+        
+        .roulette-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .roulette-wheel {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            border: 8px solid #fff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            position: relative;
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            overflow: hidden;
+        }
+        
+        .roulette-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ff6b6b;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .roulette-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: right bottom;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        
+        .controls {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            margin: 0;
+        }
+        
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .participant-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .participant-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .participant-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .btn-add {
+            background: #4ecdc4;
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #45b7b8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-remove {
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 15px;
+        }
+        
+        .btn-remove:hover {
+            background: #ff5252;
+        }
+        
+        .btn-spin {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            font-size: 20px;
+            padding: 15px 40px;
+            margin: 20px 0;
+        }
+        
+        .btn-spin:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-spin:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-reset {
+            background: #6c5ce7;
+            color: white;
+            margin-left: 10px;
+        }
+        
+        .btn-reset:hover {
+            background: #5f3dc4;
+            transform: translateY(-2px);
+        }
+        
+        .btn-back {
+            background: #6c5ce7;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background: #5f3dc4;
+            transform: translateY(-2px);
+        }
+        
+        .participants-list {
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .participant-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(45deg, #ffeaa7, #fab1a0);
+            border-radius: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3436;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: scale(0);
+            transition: transform 0.5s ease-out;
+        }
+        
+        .result.show {
+            transform: scale(1);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .spinning {
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .participants-bar {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .participant-input-horizontal input {
+                width: 140px;
+                font-size: 14px;
+                padding: 8px;
+            }
+            
+            .participant-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .participants-horizontal {
+                max-width: 100%;
+            }
+            
+            .participant-chip {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            
+            .participants-bar {
+                margin: 8px;
+                padding: 10px 12px;
+            }
+            
+            .participant-input-horizontal input {
+                width: 120px;
+                font-size: 13px;
+                padding: 6px;
+            }
+            
+            .participant-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .participants-horizontal {
+                max-width: 100%;
+            }
+            
+            .participant-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .roulettes-container {
+                flex-direction: row;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 15px;
+                overflow-x: auto;
+                padding: 0 3px;
+            }
+            
+            .roulette-item {
+                min-width: 160px;
+                max-width: 180px;
+                padding: 12px;
+                flex: 0 0 auto;
+            }
+            
+            .roulette-wheel-mini {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .controls {
+                margin: 8px;
+                padding: 12px;
+            }
+            
+            .controls {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .roulettes-container {
+                gap: 15px;
+            }
+            
+            .roulette-item {
+                min-width: 200px;
+                max-width: 220px;
+                padding: 15px;
+                flex: 0 0 auto;
+            }
+            
+            .roulette-wheel-mini {
+                width: 170px;
+                height: 170px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="participants-bar">
+        <div class="participant-controls">
+            <div class="participant-input-horizontal">
+                <input type="text" id="participant-name" placeholder="Nom du participant" maxlength="50">
+                <button class="btn btn-add" onclick="addParticipant()">Ajouter</button>
+            </div>
+            
+            <div class="participants-horizontal" id="participants-horizontal">
+                <p style="color: #666; font-style: italic;">Aucun participant pour le moment</p>
+            </div>
+            
+            <button class="btn btn-remove" onclick="clearAllParticipants()" style="background: #ff6b6b; color: white;">
+                Effacer tous les participants
+            </button>
+            
+            <button class="btn btn-back" onclick="goBack()">Retour au SQCDP</button>
+        </div>
+    </div>
+
+    <div class="roulettes-container">
+        <div class="roulette-item">
+            <h3>Scribe</h3>
+            <div class="roulette-mini-container">
+                <div class="roulette-pointer-mini"></div>
+                <div class="roulette-wheel-mini" id="roulette-scribe" onclick="spinAllWheels()" style="cursor: pointer;" title="Cliquer pour lancer toutes les roulettes"></div>
+            </div>
+            <div class="result-mini" id="result-scribe">?</div>
+        </div>
+        
+        <div class="roulette-item">
+            <h3>Animateur</h3>
+            <div class="roulette-mini-container">
+                <div class="roulette-pointer-mini"></div>
+                <div class="roulette-wheel-mini" id="roulette-animateur" onclick="spinAllWheels()" style="cursor: pointer;" title="Cliquer pour lancer toutes les roulettes"></div>
+            </div>
+            <div class="result-mini" id="result-animateur">?</div>
+        </div>
+        
+        <div class="roulette-item">
+            <h3>Leader Éveilleur</h3>
+            <div class="roulette-mini-container">
+                <div class="roulette-pointer-mini"></div>
+                <div class="roulette-wheel-mini" id="roulette-leader" onclick="spinAllWheels()" style="cursor: pointer;" title="Cliquer pour lancer toutes les roulettes"></div>
+            </div>
+            <div class="result-mini" id="result-leader">?</div>
+        </div>
+        
+        <div class="roulette-item">
+            <h3>Meta</h3>
+            <div class="roulette-mini-container">
+                <div class="roulette-pointer-mini"></div>
+                <div class="roulette-wheel-mini" id="roulette-meta" onclick="spinAllWheels()" style="cursor: pointer;" title="Cliquer pour lancer toutes les roulettes"></div>
+            </div>
+            <div class="result-mini" id="result-meta">?</div>
+        </div>
+        
+        <div class="roulette-item">
+            <h3>Time Keeper</h3>
+            <div class="roulette-mini-container">
+                <div class="roulette-pointer-mini"></div>
+                <div class="roulette-wheel-mini" id="roulette-timekeeper" onclick="spinAllWheels()" style="cursor: pointer;" title="Cliquer pour lancer toutes les roulettes"></div>
+            </div>
+            <div class="result-mini" id="result-timekeeper">?</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let participants = [];
+        let isSpinning = false;
+        
+        // Rôles et leurs IDs
+        const roles = [
+            { id: 'scribe', name: 'Scribe', emoji: '' },
+            { id: 'animateur', name: 'Animateur', emoji: '' },
+            { id: 'leader', name: 'Leader Éveilleur', emoji: '' },
+            { id: 'meta', name: 'Meta', emoji: '' },
+            { id: 'timekeeper', name: 'Time Keeper', emoji: '' }
+        ];
+        
+        // Fonctions de sauvegarde et chargement
+        function saveParticipants() {
+            localStorage.setItem('sqcdp_roulette_participants', JSON.stringify(participants));
+        }
+        
+        function loadParticipants() {
+            const saved = localStorage.getItem('sqcdp_roulette_participants');
+            if (saved) {
+                participants = JSON.parse(saved);
+            }
+        }
+        
+        // Couleurs pour les sections de la roulette
+        const colors = [
+            '#ff6b6b', '#4ecdc4', '#45b7b8', '#f9ca24', '#f0932b',
+            '#eb4d4b', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e',
+            '#e17055', '#00b894', '#00cec9', '#0984e3', '#6c5ce7',
+            '#a29bfe', '#fd79a8', '#fdcb6e', '#e17055', '#00b894'
+        ];
+        
+        function addParticipant() {
+            const nameInput = document.getElementById('participant-name');
+            const name = nameInput.value.trim();
+            
+            if (name && !participants.includes(name)) {
+                participants.push(name);
+                nameInput.value = '';
+                saveParticipants(); // Sauvegarder après ajout
+                updateParticipantsList();
+                updateAllWheels();
+            } else if (participants.includes(name)) {
+                alert('Ce participant existe déjà !');
+            } else {
+                alert('Veuillez entrer un nom valide !');
+            }
+        }
+        
+        function removeParticipant(index) {
+            participants.splice(index, 1);
+            saveParticipants(); // Sauvegarder après suppression
+            updateParticipantsList();
+            updateAllWheels();
+        }
+        
+        // Fonction de sécurité pour échapper les caractères HTML
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function updateParticipantsList() {
+            const list = document.getElementById('participants-horizontal');
+            
+            if (participants.length === 0) {
+                list.innerHTML = '<p style="color: #666; font-style: italic;">Aucun participant pour le moment</p>';
+            } else {
+                list.innerHTML = participants.map((name, index) => `
+                    <div class="participant-chip">
+                        <span>${escapeHtml(name)}</span>
+                        <button onclick="removeParticipant(${index})" title="Supprimer ${escapeHtml(name)}">×</button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function updateAllWheels() {
+            roles.forEach(role => {
+                updateWheel(role.id);
+            });
+        }
+        
+        function updateWheel(roleId) {
+            const wheel = document.getElementById(`roulette-${roleId}`);
+            
+            if (participants.length === 0) {
+                wheel.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 14px;">Ajoutez des participants</div>';
+                return;
+            }
+            
+            const sectionAngle = 360 / participants.length;
+            
+            wheel.innerHTML = participants.map((name, index) => {
+                const rotation = index * sectionAngle;
+                const color = colors[index % colors.length];
+                
+                return `
+                    <div class="roulette-section-mini" style="
+                        transform: rotate(${rotation}deg);
+                        background: ${color};
+                        clip-path: polygon(0 0, 0 100%, ${Math.tan((sectionAngle / 2) * Math.PI / 180) * 100}% 100%);
+                    ">
+                        <span style="
+                            transform: rotate(${sectionAngle / 2}deg);
+                            transform-origin: center;
+                            white-space: nowrap;
+                            max-width: 75px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        ">${escapeHtml(name)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function spinAllWheels() {
+            if (participants.length === 0 || isSpinning) return;
+            
+            isSpinning = true;
+            
+            // Mélanger les participants pour éviter les doublons
+            const shuffledParticipants = [...participants];
+            const selectedParticipants = [];
+            const results = {};
+            
+            // Réinitialiser toutes les roulettes
+            roles.forEach(role => {
+                const wheel = document.getElementById(`roulette-${role.id}`);
+                const result = document.getElementById(`result-${role.id}`);
+                wheel.style.transform = 'rotate(0deg)';
+                result.textContent = '...';
+                result.style.background = 'linear-gradient(45deg, #ddd, #bbb)';
+            });
+            
+            // Lancer toutes les roulettes simultanément
+            roles.forEach((role, roleIndex) => {
+                setTimeout(() => {
+                    spinSingleWheel(role.id, shuffledParticipants, selectedParticipants, results, roleIndex === roles.length - 1);
+                }, roleIndex * 200); // Décalage léger pour un effet visuel
+            });
+        }
+        
+        function spinSingleWheel(roleId, availableParticipants, selectedParticipants, results, isLast) {
+            const wheel = document.getElementById(`roulette-${roleId}`);
+            
+            // Filtrer les participants déjà sélectionnés
+            const remainingParticipants = availableParticipants.filter(p => !selectedParticipants.includes(p));
+            
+            if (remainingParticipants.length === 0) return;
+            
+            // Calculer l'angle de rotation
+            const spins = 5 + Math.random() * 5; // 5-10 tours
+            const finalAngle = Math.random() * 360;
+            const totalRotation = spins * 360 + finalAngle;
+            
+            // Lancer la rotation
+            setTimeout(() => {
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+            }, 100);
+            
+            // Déterminer le gagnant après l'animation
+            setTimeout(() => {
+                const sectionAngle = 360 / participants.length;
+                const adjustedAngle = (360 - (finalAngle % 360)) % 360;
+                let winnerIndex = Math.floor(adjustedAngle / sectionAngle);
+                
+                // S'assurer que le gagnant n'est pas déjà pris
+                let winner = participants[winnerIndex];
+                let attempts = 0;
+                while (selectedParticipants.includes(winner) && attempts < participants.length) {
+                    winnerIndex = (winnerIndex + 1) % participants.length;
+                    winner = participants[winnerIndex];
+                    attempts++;
+                }
+                
+                // Si tous les participants sont pris, prendre un au hasard parmi les restants
+                if (selectedParticipants.includes(winner)) {
+                    winner = remainingParticipants[Math.floor(Math.random() * remainingParticipants.length)];
+                }
+                
+                selectedParticipants.push(winner);
+                results[roleId] = winner;
+                
+                showSingleResult(roleId, winner);
+                
+                // Si c'est la dernière roulette, afficher le résumé final
+                if (isLast) {
+                    setTimeout(() => {
+                        showFinalResults(results);
+                        createConfetti();
+                        isSpinning = false;
+                    }, 500);
+                }
+            }, 4000);
+        }
+        
+        function showSingleResult(roleId, winner) {
+            const result = document.getElementById(`result-${roleId}`);
+            const role = roles.find(r => r.id === roleId);
+            result.textContent = winner; // textContent est sécurisé
+            result.style.background = 'linear-gradient(45deg, #ffeaa7, #fab1a0)';
+            result.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                result.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
+        function showFinalResults(results) {
+            const resultDiv = document.getElementById('result');
+            let html = '<h3>Attribution des Rôles :</h3><div style="text-align: left; max-width: 400px; margin: 0 auto;">';
+            
+            roles.forEach(role => {
+                html += `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.8); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span><strong>${escapeHtml(role.name)} :</strong></span>
+                    <span style="color: #3A55A4; font-weight: bold;">${escapeHtml(results[role.id])}</span>
+                </div>`;
+            });
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            resultDiv.classList.add('show');
+        }
+        
+        function resetAllWheels() {
+            // Réinitialiser les résultats
+            roles.forEach(role => {
+                const wheel = document.getElementById(`roulette-${role.id}`);
+                const result = document.getElementById(`result-${role.id}`);
+                wheel.style.transform = 'rotate(0deg)';
+                result.textContent = '?';
+                result.style.background = 'linear-gradient(45deg, #ffeaa7, #fab1a0)';
+                result.style.transform = 'scale(1)';
+            });
+            
+            // Réinitialiser le résultat global
+            const resultDiv = document.getElementById('result');
+            resultDiv.classList.remove('show');
+            resultDiv.innerHTML = '';
+            
+            isSpinning = false;
+        }
+        
+        function clearAllParticipants() {
+            if (participants.length === 0) return;
+            
+            if (confirm(`Êtes-vous sûr de vouloir effacer tous les ${participants.length} participants sauvegardés ?`)) {
+                participants = [];
+                saveParticipants(); // Sauvegarder la liste vide
+                updateParticipantsList();
+                updateAllWheels();
+                resetAllWheels(); // Reset aussi les résultats
+            }
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti');
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 30);
+            }
+        }
+        
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        
+        // Permettre d'ajouter un participant en appuyant sur Entrée
+        document.getElementById('participant-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addParticipant();
+            }
+        });
+        
+        // Charger les participants sauvegardés au démarrage
+        loadParticipants();
+        
+        // Initialiser les roulettes
+        updateAllWheels();
+        updateParticipantsList(); // Afficher les participants chargés
+    </script>
+</body>
+</html>

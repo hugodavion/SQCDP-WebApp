@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>SQCDP - Tableau de bord</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Application de suivi SQCDP pour la gestion de tableaux de bord">
+  <link rel="stylesheet" href="style.css">
+  <style id="hide-until-auth">body>:not(#login-dialog):not(script){display:none!important;}</style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/config.env.js"></script>
+  <div class="top-buttons">
+    <button id="roulette-btn" class="roulette-btn" onclick="openRoulette()">🎯 Roulette</button>
+    <button id="logout-btn" class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+  
+  <div class="header-container">
+    <div class="legend">
+      <div class="legend-row">
+        <span class="legend-title">États:</span>
+        <span class="legend-item"><span class="dot vert"></span><span id="legend-vert">OK</span></span>
+        <span class="legend-item"><span class="dot jaune"></span><span id="legend-jaune">Attention</span></span>
+        <span class="legend-item"><span class="dot rouge"></span><span id="legend-rouge">Blocage</span></span>
+        <span class="legend-item"><span class="dot gris"></span><span id="legend-gris">Non rempli</span></span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-title">Indicateurs:</span>
+        <span class="legend-item"><span class="indicator-line commentaire" style="display:inline-block;width:24px;height:6px;background:#3A55A4;border-radius:3px;vertical-align:middle;margin-right:4px;"></span><span style="color:#222;font-weight:600;">Commentaire</span></span>
+        <span class="legend-item"><span class="indicator-line jour-actuel" style="display:inline-block;width:24px;height:2px;background:#3A55A4;vertical-align:middle;margin-right:4px;"></span><span style="color:#222;">Jour actuel</span></span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-title">Jours:</span>
+        <span class="legend-item"><span class="day-circle travail"></span>Travail</span>
+        <span class="legend-item"><span class="day-circle weekend"></span>Weekend</span>
+        <span class="legend-item"><span class="day-circle ferie"></span>Férié</span>
+      </div>
+    </div>
+    <h1>SQCDP - Tableau de bord</h1>
+  </div>
+  
+  <div class="month-selector">
+    <label for="month-select">Mois affiché :</label>
+    <select id="month-select"></select>
+  </div>
+  
+  <div class="sqcdp-container" id="sqcdp-container"></div>
+
+  <dialog id="login-dialog">
+    <form id="login-form" method="dialog" class="login-form">
+      <h2>Connexion</h2>
+      <div class="login-fields">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="Email" required autofocus autocomplete="username">
+        <label for="login-password">Mot de passe</label>
+        <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="current-password">
+      </div>
+      <div id="login-error" class="login-error"></div>
+      <button type="submit" class="login-btn">Se connecter</button>
+    </form>
+  </dialog>
+  
+  <dialog id="case-dialog">
+    <form id="case-form" method="dialog">
+      <div id="case-header"></div>
+      <div id="case-indicators"></div>
+      <div id="case-actions"></div>
+      <div class="dialog-actions">
+        <button type="button" id="add-action-btn">Ajouter une action</button>
+        <button type="button" id="add-comment-btn">Ajouter un commentaire</button>
+        <button type="button" id="close-case-dialog">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="action-dialog">
+    <form id="action-form" method="dialog">
+      <h2 id="action-title"></h2>
+      <div id="action-fields"></div>
+      <div class="dialog-actions">
+        <button type="submit" id="save-action-btn">Enregistrer</button>
+        <button type="button" id="close-action-dialog">Annuler</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="saisie-dialog">
+    <form id="saisie-form" method="dialog">
+      <h2><span id="form-title"></span></h2>
+      <div class="form-row" id="form-axes"></div>
+      <div class="dialog-actions">
+        <button type="submit">Enregistrer</button>
+        <button type="button" id="fermer-dialog">Annuler</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="mois-dialog">
+    <form method="dialog">
+      <h2>Détails mensuels <span id="mois-details-axe"></span></h2>
+      <div id="mois-details-table"></div>
+      <div class="dialog-actions">
+        <button type="button" id="close-mois-details">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/data-manager.js"></script>
+  <script src="js/canvas-renderer-fixed.js"></script>
+  <script src="js/event-manager.js"></script>
+  <script src="js/ui-manager.js"></script>
+  <script src="js/app-main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    function openRoulette() {
+      window.location.href = 'roulette.html';
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.sqcdp-card').forEach(card => card.classList.add('enhanced-card'));
+      
+      const logoutBtn = document.getElementById('logout-btn');
+      const rouletteBtn = document.getElementById('roulette-btn');
+      if (logoutBtn && rouletteBtn) {
+        const isAuthenticated = Object.keys(localStorage).some(key => 
+          key.startsWith('sb-') && key.endsWith('-auth-token')
+        ) || document.cookie.includes('sb-');
+        logoutBtn.style.display = isAuthenticated ? 'block' : 'none';
+        rouletteBtn.style.display = isAuthenticated ? 'block' : 'none';
+      }
+    });
+  </script>
+</body>
+</html>
