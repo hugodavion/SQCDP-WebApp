@@ -1,31 +1,32 @@
 // js/auth.js
-// Configuration sécurisée - utilise les variables d'environnement
+// Configuration sécurisée - utilise la configuration centralisée
 let supabase;
 
 function initializeSupabase() {
-  // Attendre que ENV_CONFIG soit disponible
-  if (!window.ENV_CONFIG || !window.ENV_CONFIG.SUPABASE_URL) {
-    console.log('⏳ Attente de la configuration...');
-    setTimeout(initializeSupabase, 50);
-    return;
+  try {
+    // Utiliser la configuration depuis config.js
+    const config = CONFIG.SUPABASE.getConfig();
+    
+    if (!config.url || !config.anonKey) {
+      throw new Error('Configuration Supabase manquante');
+    }
+
+    if (window.Supabase && typeof window.Supabase.createClient === 'function') {
+      supabase = window.Supabase.createClient(config.url, config.anonKey);
+      console.log('✅ Supabase initialisé avec succès');
+    } else if (window.supabase && typeof window.supabase.createClient === 'function') {
+      supabase = window.supabase.createClient(config.url, config.anonKey);
+      console.log('✅ Supabase initialisé avec succès');
+    } else {
+      console.error('❌ Erreur : Le SDK Supabase n\'est pas chargé.');
+      return;
+    }
+
+    // Initialiser l'authentification une fois Supabase prêt
+    initializeAuth();
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'initialisation de Supabase:', error);
   }
-
-  const SUPABASE_URL = window.ENV_CONFIG.SUPABASE_URL;
-  const SUPABASE_KEY = window.ENV_CONFIG.SUPABASE_KEY;
-
-  if (window.Supabase && typeof window.Supabase.createClient === 'function') {
-    supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('✅ Supabase initialisé avec succès');
-  } else if (window.supabase && typeof window.supabase.createClient === 'function') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('✅ Supabase initialisé avec succès');
-  } else {
-    console.error('❌ Erreur : Le SDK Supabase n\'est pas chargé.');
-    return;
-  }
-
-  // Initialiser l'authentification une fois Supabase prêt
-  initializeAuth();
 }
 
 function initializeAuth() {
