@@ -3,8 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -12,7 +10,7 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -28,13 +26,26 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Create config file with environment variables
+      - name: Create secure config file
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
+          # Vérifier que les secrets existent
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "❌ ERREUR: Les secrets SUPABASE_URL et SUPABASE_KEY doivent être configurés"
+            echo "📝 Allez dans Settings > Secrets and variables > Actions de votre repo"
+            echo "🔑 Ajoutez: SUPABASE_URL et SUPABASE_KEY"
+            exit 1
+          fi
+          
+          # Créer le fichier de config sécurisé
           cat > js/config.env.js << EOF
-          // Configuration d'environnement - Générée automatiquement par GitHub Actions
+          // Configuration générée automatiquement par GitHub Actions
+          // ⚠️  NE PAS MODIFIER MANUELLEMENT - Ce fichier est généré à chaque déploiement
           const ENV_CONFIG = {
-            SUPABASE_URL: '${{ secrets.SUPABASE_URL }}',
-            SUPABASE_KEY: '${{ secrets.SUPABASE_KEY }}'
+            SUPABASE_URL: '$SUPABASE_URL',
+            SUPABASE_KEY: '$SUPABASE_KEY'
           };
           
           // Export pour utilisation
@@ -42,6 +53,8 @@ jobs:
             window.ENV_CONFIG = ENV_CONFIG;
           }
           EOF
+          
+          echo "✅ Configuration sécurisée créée"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

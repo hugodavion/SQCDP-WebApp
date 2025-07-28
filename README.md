@@ -65,22 +65,23 @@ Application web de tableau de bord SQCDP (Sécurité, Qualité, Coût, Délai, P
 
 ## 📦 Déploiement avec GitHub Pages
 
-1. **Push vers GitHub**
+1. **Configurez les secrets GitHub (OBLIGATOIRE)**
+   - Consultez le fichier [SETUP_SECRETS.md](SETUP_SECRETS.md) pour les instructions détaillées
+   - Ajoutez `SUPABASE_URL` et `SUPABASE_KEY` dans les secrets du repository
+
+2. **Push vers GitHub**
    ```bash
    git add .
    git commit -m "Initial commit"
    git push origin main
    ```
 
-2. **Activer GitHub Pages**
-   - Allez dans Settings > Pages de votre repository
-   - Source: Deploy from a branch
-   - Branch: `main` / `root`
-   - Cliquez sur Save
-
-3. **Configuration finale**
+3. **Déploiement automatique**
+   - GitHub Actions se charge automatiquement du déploiement
    - Votre site sera disponible à : `https://votre-username.github.io/SQCDP-WebApp/`
-   - Ajoutez cette URL dans les redirections autorisées de Supabase
+
+4. **Configuration finale**
+   - Ajoutez l'URL GitHub Pages dans les redirections autorisées de Supabase
 
 ## 🔒 Sécurité
 
