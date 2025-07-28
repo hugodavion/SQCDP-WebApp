@@ -26,7 +26,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Create secure config file
+      - name: Inject secrets into HTML
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -39,22 +39,19 @@ jobs:
             exit 1
           fi
           
-          # Créer le fichier de config sécurisé
-          cat > js/config.env.js << EOF
-          // Configuration générée automatiquement par GitHub Actions
-          // ⚠️  NE PAS MODIFIER MANUELLEMENT - Ce fichier est généré à chaque déploiement
-          const ENV_CONFIG = {
+          # Créer un fichier JavaScript temporaire avec les secrets
+          cat > secrets.js << EOF
+          // Configuration injectée par GitHub Actions - secrets sécurisés
+          window.GITHUB_SECRETS = {
             SUPABASE_URL: '$SUPABASE_URL',
             SUPABASE_KEY: '$SUPABASE_KEY'
           };
-          
-          // Export pour utilisation
-          if (typeof window !== 'undefined') {
-            window.ENV_CONFIG = ENV_CONFIG;
-          }
           EOF
           
-          echo "✅ Configuration sécurisée créée"
+          # Injecter le script dans index.html juste après le script Supabase
+          sed -i 's|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>\n  <script src="secrets.js"></script>|' index.html
+          
+          echo "✅ Secrets injectés dans l'HTML"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

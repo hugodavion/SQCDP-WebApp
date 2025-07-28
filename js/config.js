@@ -1,24 +1,25 @@
 // Configuration et constantes globales
 const CONFIG = {
-  // Configuration Supabase - PUBLIQUE seulement
+  // Configuration Supabase - AUCUNE donnée sensible ici
   SUPABASE: {
-    // Configuration pour GitHub Pages (production)
-    PRODUCTION: {
-      url: 'https://hinhxyynpbetefknrupz.supabase.co',
-      // Clé publique uniquement - pas de secret
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhpbmh4eXlucGJldGVma25ydXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5MDY2NjEsImV4cCI6MjA1MzQ4MjY2MX0.8rWHyNcmhzqaYzUCGhB9YE8U9jUdFwGg9jVKyOmE5NA'
-    },
-    
     // Méthode pour obtenir la configuration appropriée
     getConfig() {
       const isGitHubPages = window.location.hostname === 'hugodavion.github.io';
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       
       if (isGitHubPages) {
-        return this.PRODUCTION;
+        // Sur GitHub Pages : utilise les variables injectées par GitHub Actions
+        if (window.GITHUB_SECRETS && window.GITHUB_SECRETS.SUPABASE_URL && window.GITHUB_SECRETS.SUPABASE_KEY) {
+          return {
+            url: window.GITHUB_SECRETS.SUPABASE_URL,
+            anonKey: window.GITHUB_SECRETS.SUPABASE_KEY
+          };
+        } else {
+          throw new Error('Configuration GitHub Pages non disponible - secrets manquants');
+        }
       }
       
-      // Pour le développement local, on essaie de charger config.env.js
+      // Pour le développement local seulement
       if (isLocal && window.ENV_CONFIG) {
         return {
           url: window.ENV_CONFIG.SUPABASE_URL,
@@ -26,8 +27,7 @@ const CONFIG = {
         };
       }
       
-      // Fallback vers la configuration de production
-      return this.PRODUCTION;
+      throw new Error('Configuration non disponible pour cet environnement');
     }
   },
 
