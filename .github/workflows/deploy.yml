@@ -40,7 +40,8 @@ jobs:
           fi
           
           # Créer un fichier JavaScript temporaire avec les secrets
-          cat > secrets.js << EOF
+          mkdir -p js
+          cat > js/secrets.js << EOF
           // Configuration injectée par GitHub Actions - secrets sécurisés
           window.GITHUB_SECRETS = {
             SUPABASE_URL: '$SUPABASE_URL',
@@ -49,7 +50,7 @@ jobs:
           EOF
           
           # Injecter le script dans index.html juste après le script Supabase
-          sed -i 's|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>\n  <script src="secrets.js"></script>|' index.html
+          sed -i 's|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>|<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>\n  <script src="js/secrets.js"></script>|' index.html
           
           echo "✅ Secrets injectés dans l'HTML"
 

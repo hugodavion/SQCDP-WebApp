@@ -1,5 +1,6 @@
 # Fichiers sensibles - NE PAS COMMIT
 js/config.env.js
+# NE PAS ignorer secrets.js, il est généré dynamiquement par le workflow
 
 # Dépendances Node.js
 node_modules/
