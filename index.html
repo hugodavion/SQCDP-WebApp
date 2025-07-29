@@ -1,3 +1,4 @@
+<!-- Trigger redeploy: ajout commentaire GitHub Actions -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -11,15 +12,6 @@
 </head>
 <body>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    // Chargement conditionnel du fichier de config pour développement local
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const script = document.createElement('script');
-      script.src = 'js/config.env.js';
-      script.onerror = () => console.warn('Fichier config.env.js non trouvé - normal en développement');
-      document.head.appendChild(script);
-    }
-  </script>
   <div class="top-buttons">
     <button id="roulette-btn" class="roulette-btn" onclick="openRoulette()">🎯 Roulette</button>
     <button id="logout-btn" class="logout-btn" onclick="logout()">Déconnexion</button>
